@@ -1,0 +1,36 @@
+{
+  "name": "mmm-synologyphotos",
+  "version": "1.0.0",
+  "description": "MagicMirror² module to display photos from Synology Photos as a slideshow on your smart mirror",
+  "main": "MMM-SynologyPhotos.js",
+  "scripts": {
+    "start": "echo 'This is a MagicMirror² module. Install it in ~/MagicMirror/modules/'",
+    "lint": "eslint *.js",
+    "test": "echo 'No tests configured yet'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zarif98/MMM-SynologyPhotos.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zarif98/MMM-SynologyPhotos/issues"
+  },
+  "homepage": "https://github.com/zarif98/MMM-SynologyPhotos#readme",
+  "keywords": [
+    "MagicMirror",
+    "MagicMirror2",
+    "MagicMirror-Module",
+    "Synology",
+    "Synology Photos",
+    "NAS",
+    "photo",
+    "slideshow",
+    "digital frame",
+    "smart mirror"
+  ],
+  "author": "Zarif Rahman",
+  "license": "MIT",
+  "dependencies": {
+    "node-fetch": "^2.7.0"
+  }
+}
