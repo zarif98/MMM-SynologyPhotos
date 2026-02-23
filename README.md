@@ -19,11 +19,12 @@ A [MagicMirror²](https://magicmirror.builders/) module that displays photos fro
 
 ## Installation
 
-### Via MagicMirror CLI (recommended)
+### Via MMPM (recommended)
+
+Install using [MMPM (MagicMirror Package Manager)](https://github.com/Bee-Mar/mmpm):
 
 ```bash
-cd ~/MagicMirror
-npx mmm-cli install MMM-SynologyPhotos
+mmpm install MMM-SynologyPhotos
 ```
 
 ### Manual install
@@ -265,9 +266,9 @@ https://<NAS_IP>:5001/photo/webapi/entry.cgi?api=SYNO.Foto.Browse.Folder&version
 
 This module is listed on the [MagicMirror² 3rd Party Modules](https://github.com/MagicMirrorOrg/MagicMirror/wiki/3rd-Party-Modules) wiki.
 
-To install via the MagicMirror CLI:
+To install via MMPM:
 ```bash
-npx mmm-cli install MMM-SynologyPhotos
+mmpm install MMM-SynologyPhotos
 ```
 
 Contributions are welcome! Please open an issue or submit a pull request on [GitHub](https://github.com/zarif98/MMM-SynologyPhotos).
