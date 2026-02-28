@@ -3,3 +3,4 @@ preview/
 .DS_Store
 *.log
 device_token.json
+test_thumbnail.jpg

@@ -36,18 +36,47 @@ cd MMM-SynologyPhotos
 npm install
 ```
 
+## Test Your Connection
+
+Before configuring the module, run the built-in diagnostic tool to verify your NAS is reachable and your credentials work:
+
+```bash
+cd ~/MagicMirror/modules/MMM-SynologyPhotos
+node test_connection.js <server> <username> <password> [otp_code]
+```
+
+**Examples:**
+
+```bash
+# QuickConnect
+node test_connection.js mynas.quickconnect.to myuser mypass
+
+# Direct LAN IP
+node test_connection.js 192.168.1.100:5001 myuser mypass
+
+# With 2FA OTP code (first time only — saves a device token)
+node test_connection.js mynas.quickconnect.to myuser mypass 913484
+```
+
+The tool will:
+1. Find your NAS (resolves QuickConnect, tests LAN/DDNS/external IPs)
+2. Verify the Synology Photos API is available
+3. Authenticate (with 2FA support)
+4. Fetch sample photos and download a test thumbnail
+5. Output a ready-to-paste MagicMirror config
+
 ## 2FA Setup (Two-Factor Authentication)
 
-If your Synology account has 2FA enabled, run the one-time setup script to register your MagicMirror as a trusted device:
+If your Synology account has 2FA enabled, the easiest method is to run `test_connection.js` with your OTP code as the 4th argument. This saves a device token so the module can log in without OTP in the future.
+
+Alternatively, run the interactive setup script:
 
 ```bash
 cd ~/MagicMirror/modules/MMM-SynologyPhotos
 node setup_device_token.js
 ```
 
-The script will prompt for your server URL, credentials, and a one-time OTP code from your authenticator app. After setup, the module logs in automatically without needing OTP again.
-
-> **Note:** If you ever reset 2FA on your Synology account, re-run this script to generate a new device token.
+> **Note:** If you ever reset 2FA on your Synology account, re-run either tool with a new OTP code to generate a fresh device token.
 
 ## Configuration
 

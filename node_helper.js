@@ -69,7 +69,8 @@ module.exports = NodeHelper.create({
     const portStr = port ? `:${port}` : "";
     const baseUrl = `${protocol}://${serverUrl}${portStr}`;
 
-    const loginUrl = `${baseUrl}/photo/webapi/auth.cgi`;
+    const apiPath = this.getApiPath();
+    const loginUrl = `${baseUrl}${apiPath}/auth.cgi`;
     const params = new URLSearchParams({
       api: "SYNO.API.Auth",
       version: "6",
@@ -108,13 +109,29 @@ module.exports = NodeHelper.create({
   },
 
   /**
+   * Detect if the server URL is a QuickConnect address.
+   */
+  isQuickConnect: function () {
+    return (this.config.serverUrl || "").includes("quickconnect.to");
+  },
+
+  /**
    * Build the base URL for API requests.
    */
   getBaseUrl: function () {
     const { serverUrl, port, secure } = this.config;
-    const protocol = secure ? "https" : "http";
+    const protocol = secure !== false ? "https" : "http";
     const portStr = port ? `:${port}` : "";
     return `${protocol}://${serverUrl}${portStr}`;
+  },
+
+  /**
+   * Get the webapi path prefix.
+   * QuickConnect blocks /photo/webapi/ (403), so use /webapi/ instead.
+   * Direct IP/LAN connections use the standard /photo/webapi/ path.
+   */
+  getApiPath: function () {
+    return this.isQuickConnect() ? "/webapi" : "/photo/webapi";
   },
 
   /**
@@ -122,7 +139,8 @@ module.exports = NodeHelper.create({
    */
   fetchPersonalPhotos: async function (offset, limit) {
     const baseUrl = this.getBaseUrl();
-    const url = `${baseUrl}/photo/webapi/entry.cgi`;
+    const apiPath = this.getApiPath();
+    const url = `${baseUrl}${apiPath}/entry.cgi`;
     const params = new URLSearchParams({
       api: "SYNO.Foto.Browse.Item",
       version: "1",
@@ -143,7 +161,8 @@ module.exports = NodeHelper.create({
    */
   fetchTeamPhotos: async function (offset, limit) {
     const baseUrl = this.getBaseUrl();
-    const url = `${baseUrl}/photo/webapi/entry.cgi`;
+    const apiPath = this.getApiPath();
+    const url = `${baseUrl}${apiPath}/entry.cgi`;
     const params = new URLSearchParams({
       api: "SYNO.FotoTeam.Browse.Item",
       version: "1",
@@ -164,7 +183,8 @@ module.exports = NodeHelper.create({
    */
   fetchAlbumPhotos: async function (albumId, offset, limit) {
     const baseUrl = this.getBaseUrl();
-    const url = `${baseUrl}/photo/webapi/entry.cgi`;
+    const apiPath = this.getApiPath();
+    const url = `${baseUrl}${apiPath}/entry.cgi`;
     const params = new URLSearchParams({
       api: "SYNO.Foto.Browse.Item",
       version: "1",
@@ -186,7 +206,8 @@ module.exports = NodeHelper.create({
    */
   fetchFolderPhotos: async function (folderId, offset, limit) {
     const baseUrl = this.getBaseUrl();
-    const url = `${baseUrl}/photo/webapi/entry.cgi`;
+    const apiPath = this.getApiPath();
+    const url = `${baseUrl}${apiPath}/entry.cgi`;
     const params = new URLSearchParams({
       api: "SYNO.Foto.Browse.Item",
       version: "1",
@@ -213,8 +234,9 @@ module.exports = NodeHelper.create({
       ? "SYNO.FotoTeam.Thumbnail"
       : "SYNO.Foto.Thumbnail";
 
+    const apiPath = this.getApiPath();
     return (
-      `${baseUrl}/photo/webapi/entry.cgi` +
+      `${baseUrl}${apiPath}/entry.cgi` +
       `?api=${apiName}` +
       `&version=1` +
       `&method=get` +
