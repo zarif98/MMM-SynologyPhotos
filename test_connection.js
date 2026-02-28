@@ -97,13 +97,11 @@ async function testApiEndpoint(baseUrl, apiPath, refererHost) {
   }
 }
 
-// ─── Resolve QuickConnect to candidate URLs via Synology relay ───
-async function resolveQuickConnect(fullDomain) {
+// ─── Resolve QuickConnect to fallback candidate URLs via Synology relay ───
+async function resolveQuickConnectFallbacks(fullDomain) {
   const parts = fullDomain.replace(/\.quickconnect\.to$/, "").split(".");
   const serverID = parts[0];
   const region = parts[1] || null;
-
-  info(`Server ID: ${serverID}, Region: ${region || "global"}`);
 
   const candidates = [];
   const relayPayload = JSON.stringify({
@@ -122,7 +120,7 @@ async function resolveQuickConnect(fullDomain) {
 
   for (const relayUrl of relayUrls) {
     try {
-      info(`Querying relay: ${relayUrl}`);
+      info(`Querying Synology relay for alternate paths...`);
       const resp = await fetch(relayUrl, {
         method: "POST",
         body: relayPayload,
@@ -138,28 +136,22 @@ async function resolveQuickConnect(fullDomain) {
         if (srv.interface) {
           for (const iface of srv.interface) {
             if (iface.ip) {
-              info(`  LAN IP: ${iface.ip}`);
               candidates.push({ url: `https://${iface.ip}:${iface.port || 5001}`, label: `LAN (${iface.ip})` });
             }
           }
         }
         if (srv.ddns) {
-          info(`  DDNS: ${srv.ddns}`);
           candidates.push({ url: `https://${srv.ddns}:${httpsPort}`, label: `DDNS (${srv.ddns})` });
         }
         if (srv.external?.ip) {
-          info(`  External: ${srv.external.ip}:${httpsPort}`);
           candidates.push({ url: `https://${srv.external.ip}:${httpsPort}`, label: `External IP` });
         }
         break;
       }
     } catch (err) {
-      warn(`Relay error: ${err.message.substring(0, 80)}`);
+      warn(`Relay lookup failed: ${err.message.substring(0, 60)}`);
     }
   }
-
-  // QuickConnect direct URL (always works as relay proxy)
-  candidates.push({ url: `https://${fullDomain}`, label: `QuickConnect` });
 
   return candidates;
 }
@@ -212,37 +204,54 @@ async function main() {
   // ══════════════════════════════════════════════════════
   divider("STEP 1: Finding Your NAS");
 
-  let candidates = [];
-
-  if (server.isQuickConnect) {
-    candidates = await resolveQuickConnect(server.host);
-  } else {
-    const protocol = server.port === 5000 ? "http" : "https";
-    candidates = [
-      { url: `${protocol}://${server.host}:${server.port}`, label: "Direct" },
-    ];
-  }
-
-  info(`Testing ${candidates.length} connection(s)...\n`);
-
-  // For each candidate, try both /webapi/ and /photo/webapi/ paths
   let workingBase = null;
   let workingPath = null;
 
-  for (const c of candidates) {
+  // Helper: try both API paths on a candidate URL
+  async function tryCandidate(c) {
     for (const apiPath of ["/webapi", "/photo/webapi"]) {
       const result = await testApiEndpoint(c.url, apiPath, server.host);
       if (result.ok) {
         pass(`${c.label} + ${apiPath} => ${result.apiCount} APIs`);
-        workingBase = c.url;
-        workingPath = apiPath;
-        break;
-      } else {
-        const reason = result.error || `HTTP ${result.status}`;
-        warn(`${c.label} + ${apiPath} => ${reason}`);
+        return { base: c.url, path: apiPath };
       }
     }
-    if (workingBase) break;
+    return null;
+  }
+
+  if (server.isQuickConnect) {
+    // Try QuickConnect URL directly first (fastest for remote users)
+    info("Trying QuickConnect directly...");
+    const qcResult = await tryCandidate({ url: `https://${server.host}`, label: "QuickConnect" });
+
+    if (qcResult) {
+      workingBase = qcResult.base;
+      workingPath = qcResult.path;
+    } else {
+      // QuickConnect didn't work — resolve and try LAN/DDNS/external
+      info("QuickConnect direct failed, trying alternate paths...");
+      const fallbacks = await resolveQuickConnectFallbacks(server.host);
+      info(`Found ${fallbacks.length} alternate path(s)\n`);
+
+      for (const c of fallbacks) {
+        const result = await tryCandidate(c);
+        if (result) {
+          workingBase = result.base;
+          workingPath = result.path;
+          break;
+        } else {
+          warn(`${c.label} — not reachable`);
+        }
+      }
+    }
+  } else {
+    // Direct IP / DDNS — just try it
+    const protocol = server.port === 5000 ? "http" : "https";
+    const result = await tryCandidate({ url: `${protocol}://${server.host}:${server.port}`, label: "Direct" });
+    if (result) {
+      workingBase = result.base;
+      workingPath = result.path;
+    }
   }
 
   if (!workingBase) {
