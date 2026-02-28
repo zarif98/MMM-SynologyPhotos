@@ -36,6 +36,19 @@ cd MMM-SynologyPhotos
 npm install
 ```
 
+## 2FA Setup (Two-Factor Authentication)
+
+If your Synology account has 2FA enabled, run the one-time setup script to register your MagicMirror as a trusted device:
+
+```bash
+cd ~/MagicMirror/modules/MMM-SynologyPhotos
+node setup_device_token.js
+```
+
+The script will prompt for your server URL, credentials, and a one-time OTP code from your authenticator app. After setup, the module logs in automatically without needing OTP again.
+
+> **Note:** If you ever reset 2FA on your Synology account, re-run this script to generate a new device token.
+
 ## Configuration
 
 Add the following to the `modules` array in your `config/config.js`:

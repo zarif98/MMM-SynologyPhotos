@@ -1,9 +1,30 @@
 const NodeHelper = require("node_helper");
 const fetch = require("node-fetch");
 const https = require("https");
+const http = require("http");
+const fs = require("fs");
+const path = require("path");
+
+const TOKEN_FILE = path.join(__dirname, "device_token.json");
 
 // Allow self-signed certificates common on Synology NAS devices
-const agent = new https.Agent({ rejectUnauthorized: false });
+const httpsAgent = new https.Agent({ rejectUnauthorized: false });
+const httpAgent = new http.Agent();
+
+/**
+ * Fetch wrapper for Synology API calls.
+ * Includes a Referer header matching the server URL, which is required
+ * for QuickConnect to return JSON API responses instead of HTML.
+ */
+async function synoFetch(url, serverUrl) {
+  const agent = url.startsWith("https") ? httpsAgent : httpAgent;
+  const headers = {};
+  if (serverUrl) {
+    headers["Referer"] = `https://${serverUrl}/`;
+  }
+  const response = await fetch(url, { agent, headers });
+  return response;
+}
 
 module.exports = NodeHelper.create({
   start: function () {
@@ -21,7 +42,26 @@ module.exports = NodeHelper.create({
   },
 
   /**
+   * Load saved device token for 2FA bypass.
+   */
+  loadDeviceToken: function () {
+    try {
+      if (fs.existsSync(TOKEN_FILE)) {
+        const data = JSON.parse(fs.readFileSync(TOKEN_FILE, "utf8"));
+        if (data.device_id) {
+          console.log("[MMM-SynologyPhotos] Loaded device token for 2FA bypass");
+          return data.device_id;
+        }
+      }
+    } catch (error) {
+      console.warn("[MMM-SynologyPhotos] Could not read device token:", error.message);
+    }
+    return null;
+  },
+
+  /**
    * Authenticate with the Synology API and obtain a session ID.
+   * If a device token exists, uses it to bypass 2FA OTP.
    */
   login: async function () {
     const { serverUrl, account, password, port, secure } = this.config;
@@ -32,14 +72,21 @@ module.exports = NodeHelper.create({
     const loginUrl = `${baseUrl}/photo/webapi/auth.cgi`;
     const params = new URLSearchParams({
       api: "SYNO.API.Auth",
-      version: "3",
+      version: "6",
       method: "login",
       account: account,
       passwd: password,
     });
 
+    // Add device_id for 2FA bypass if available
+    const deviceId = this.loadDeviceToken();
+    if (deviceId) {
+      params.set("device_id", deviceId);
+      params.set("device_name", "MagicMirror");
+    }
+
     try {
-      const response = await fetch(`${loginUrl}?${params.toString()}`, { agent });
+      const response = await synoFetch(`${loginUrl}?${params.toString()}`, serverUrl);
       const data = await response.json();
 
       if (data.success && data.data && data.data.sid) {
@@ -47,7 +94,11 @@ module.exports = NodeHelper.create({
         console.log("[MMM-SynologyPhotos] Login successful");
         return true;
       } else {
-        console.error("[MMM-SynologyPhotos] Login failed:", JSON.stringify(data));
+        const errCode = data.error ? data.error.code : "unknown";
+        console.error("[MMM-SynologyPhotos] Login failed (error code: " + errCode + "):", JSON.stringify(data));
+        if (errCode === 403 || errCode === 404) {
+          console.error("[MMM-SynologyPhotos] 2FA error — re-run: cd ~/MagicMirror/modules/MMM-SynologyPhotos && node setup_device_token.js");
+        }
         return false;
       }
     } catch (error) {
@@ -83,7 +134,7 @@ module.exports = NodeHelper.create({
       additional: '["thumbnail","resolution"]',
     });
 
-    const response = await fetch(`${url}?${params.toString()}`, { agent });
+    const response = await synoFetch(`${url}?${params.toString()}`, this.config.serverUrl);
     return response.json();
   },
 
@@ -104,7 +155,7 @@ module.exports = NodeHelper.create({
       additional: '["thumbnail","resolution"]',
     });
 
-    const response = await fetch(`${url}?${params.toString()}`, { agent });
+    const response = await synoFetch(`${url}?${params.toString()}`, this.config.serverUrl);
     return response.json();
   },
 
@@ -126,7 +177,7 @@ module.exports = NodeHelper.create({
       additional: '["thumbnail","resolution"]',
     });
 
-    const response = await fetch(`${url}?${params.toString()}`, { agent });
+    const response = await synoFetch(`${url}?${params.toString()}`, this.config.serverUrl);
     return response.json();
   },
 
@@ -148,7 +199,7 @@ module.exports = NodeHelper.create({
       additional: '["thumbnail","resolution"]',
     });
 
-    const response = await fetch(`${url}?${params.toString()}`, { agent });
+    const response = await synoFetch(`${url}?${params.toString()}`, this.config.serverUrl);
     return response.json();
   },
 
