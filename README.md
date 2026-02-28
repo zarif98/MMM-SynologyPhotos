@@ -69,16 +69,13 @@ The tool will:
 
 ## 2FA Setup (Two-Factor Authentication)
 
-If your Synology account has 2FA enabled, the easiest method is to run `test_connection.js` with your OTP code as the 4th argument. This saves a device token so the module can log in without OTP in the future.
-
-Alternatively, run the interactive setup script:
+If your Synology account has 2FA enabled, run `test_connection.js` with your OTP code as the 4th argument. This saves a device token so the module can log in without OTP in the future.
 
 ```bash
-cd ~/MagicMirror/modules/MMM-SynologyPhotos
-node setup_device_token.js
+node test_connection.js mynas.quickconnect.to myuser mypass 913484
 ```
 
-> **Note:** If you ever reset 2FA on your Synology account, re-run either tool with a new OTP code to generate a fresh device token.
+> **Note:** If you ever reset 2FA on your Synology account, re-run with a new OTP code to generate a fresh device token.
 
 ## Configuration
 

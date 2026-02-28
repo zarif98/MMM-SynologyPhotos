@@ -120,7 +120,7 @@ module.exports = NodeHelper.create({
         const errCode = data.error ? data.error.code : "unknown";
         console.error("[MMM-SynologyPhotos] Login failed (error code: " + errCode + "):", JSON.stringify(data));
         if (errCode === 403 || errCode === 404) {
-          console.error("[MMM-SynologyPhotos] 2FA error — re-run: cd ~/MagicMirror/modules/MMM-SynologyPhotos && node setup_device_token.js");
+          console.error("[MMM-SynologyPhotos] 2FA error — run: cd ~/MagicMirror/modules/MMM-SynologyPhotos && node test_connection.js <server> <user> <pass> <otp_code>");
         }
         return false;
       }
