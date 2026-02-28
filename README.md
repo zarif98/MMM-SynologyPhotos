@@ -6,6 +6,8 @@ A [MagicMirror²](https://magicmirror.builders/) module that displays photos fro
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Node](https://img.shields.io/badge/node-%3E%3D16-brightgreen)
 
+<img src="images/example.png" alt="MMM-SynologyPhotos Example">
+
 ## Features
 
 - **Personal Space & Shared Space** — Browse photos from either space
