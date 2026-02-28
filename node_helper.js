@@ -32,6 +32,28 @@ module.exports = NodeHelper.create({
     this.sid = null;
     this.photos = [];
     this.refreshTimer = null;
+    this.setupProxy();
+  },
+
+  setupProxy: function () {
+    const self = this;
+    this.expressApp.get("/synology-photos/image", async (req, res) => {
+      const targetUrl = req.query.url;
+      if (!targetUrl) return res.status(400).send("Missing URL");
+
+      try {
+        const response = await synoFetch(targetUrl, self.config.serverUrl);
+        if (!response.ok) {
+          return res.status(response.status).send(response.statusText);
+        }
+        res.setHeader("Content-Type", response.headers.get("content-type") || "image/jpeg");
+        res.setHeader("Cache-Control", "public, max-age=86400"); // Cache for 24h
+        response.body.pipe(res);
+      } catch (err) {
+        console.error("[MMM-SynologyPhotos] Proxy error:", err.message);
+        res.status(500).send("Proxy error");
+      }
+    });
   },
 
   socketNotificationReceived: function (notification, payload) {
@@ -286,12 +308,13 @@ module.exports = NodeHelper.create({
           (p) =>
             p.additional &&
             p.additional.thumbnail &&
-            p.additional.thumbnail[thumbnailSize] === "ready"
+            (p.additional.thumbnail[thumbnailSize] === "ready" ||
+              p.additional.thumbnail[thumbnailSize] === true)
         )
         .map((p) => ({
           id: p.id,
           filename: p.filename,
-          url: this.buildThumbnailUrl(p, thumbnailSize),
+          url: "/synology-photos/image?url=" + encodeURIComponent(this.buildThumbnailUrl(p, thumbnailSize)),
           width: p.additional.resolution ? p.additional.resolution.width : null,
           height: p.additional.resolution ? p.additional.resolution.height : null,
           time: p.time,
