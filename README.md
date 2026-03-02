@@ -23,8 +23,6 @@ A [MagicMirror²](https://magicmirror.builders/) module that displays photos fro
 
 ### Via MMPM (recommended)
 
-Install using [MMPM (MagicMirror Package Manager)](https://github.com/Bee-Mar/mmpm):
-
 ```bash
 mmpm install MMM-SynologyPhotos
 ```
@@ -60,163 +58,31 @@ node test_connection.js 192.168.1.100:5001 myuser mypass
 node test_connection.js mynas.quickconnect.to myuser mypass 913484
 ```
 
-The tool will:
-1. Find your NAS (resolves QuickConnect, tests LAN/DDNS/external IPs)
-2. Verify the Synology Photos API is available
-3. Authenticate (with 2FA support)
-4. Fetch sample photos and download a test thumbnail
-5. Output a ready-to-paste MagicMirror config
-
-## 2FA Setup (Two-Factor Authentication)
-
-If your Synology account has 2FA enabled, run `test_connection.js` with your OTP code as the 4th argument. This saves a device token so the module can log in without OTP in the future.
-
-```bash
-node test_connection.js mynas.quickconnect.to myuser mypass 913484
-```
-
-> **Note:** If you ever reset 2FA on your Synology account, re-run with a new OTP code to generate a fresh device token.
+> **Note:** If your Synology account has 2FA enabled, run `test_connection.js` with your OTP code as the 4th argument. This saves a device token so the module can log in without OTP in the future. If you ever reset 2FA, re-run with a new OTP code.
 
 ## Configuration
 
 Add the following to the `modules` array in your `config/config.js`:
 
-### Minimal example
-
 ```javascript
 {
   module: "MMM-SynologyPhotos",
-  position: "middle_center",
+  position: "middle_center",       // any MagicMirror² region
   config: {
     serverUrl: "192.168.1.100",
     port: 5001,
     secure: true,
     account: "your_username",
     password: "your_password",
+
+    // Optional — see full options table below
+    // sizePreset: "fullscreen",
+    // albumId: 42,
+    // slideshowSpeed: 30000,
+    // showDate: true,
   }
 }
 ```
-
-### Fullscreen photo frame
-
-```javascript
-{
-  module: "MMM-SynologyPhotos",
-  position: "fullscreen_above",
-  config: {
-    serverUrl: "192.168.1.100",
-    port: 5001,
-    secure: true,
-    account: "your_username",
-    password: "your_password",
-    sizePreset: "fullscreen",
-    slideshowSpeed: 30000,
-    showDate: true,
-  }
-}
-```
-
-### Small sidebar widget
-
-```javascript
-{
-  module: "MMM-SynologyPhotos",
-  position: "top_right",
-  config: {
-    serverUrl: "192.168.1.100",
-    port: 5001,
-    secure: true,
-    account: "your_username",
-    password: "your_password",
-    sizePreset: "small",
-    showCounter: false,
-  }
-}
-```
-
-### Custom size from a specific album
-
-```javascript
-{
-  module: "MMM-SynologyPhotos",
-  position: "bottom_center",
-  config: {
-    serverUrl: "192.168.1.100",
-    port: 5001,
-    secure: true,
-    account: "your_username",
-    password: "your_password",
-    albumId: 42,
-    width: 700,
-    height: 500,
-    backgroundSize: "contain",
-    showFilename: true,
-    showDate: true,
-  }
-}
-```
-
-## Widget Sizing
-
-You have three ways to control the widget size. They are evaluated in this priority order:
-
-### 1. Custom pixel dimensions (highest priority)
-
-Set `width` and/or `height` directly in pixels:
-
-```javascript
-config: {
-  width: 600,
-  height: 400,
-}
-```
-
-### 2. Size presets
-
-Use the `sizePreset` option for common sizes:
-
-| Preset | Width | Height | Best for |
-|---|---|---|---|
-| `"small"` | 300px | 200px | Sidebar widget, corner placement |
-| `"medium"` | 480px | 320px | Side panel, quarter-screen |
-| `"large"` | 800px | 600px | Main area, half-screen |
-| `"xlarge"` | 1024px | 768px | Dominant display |
-| `"fullscreen"` | 100% | 100% | Full mirror background |
-
-```javascript
-config: {
-  sizePreset: "medium",
-}
-```
-
-### 3. CSS max-width / max-height (fallback)
-
-If neither of the above are set, uses CSS strings:
-
-```javascript
-config: {
-  maxWidth: "50%",
-  maxHeight: "300px",
-}
-```
-
-> **Tip:** You can mix approaches — e.g., use a preset but override just the width:
-> ```javascript
-> config: { sizePreset: "medium", width: 600 }
-> ```
-> This gives you 600×320.
-
-### Auto thumbnail quality
-
-When `thumbnailSize` is `"auto"` (the default), the module automatically picks the best Synology thumbnail resolution for your widget size:
-
-| Widget width | Thumbnail selected | Resolution |
-|---|---|---|
-| ≤ 320px | `sm` | 240px |
-| 321–800px | `m` | 320px |
-| > 800px or fullscreen | `xl` | 1280px |
-
-This saves bandwidth on smaller widgets. You can override this by setting `thumbnailSize` explicitly to `"sm"`, `"m"`, or `"xl"`.
 
 ## All Configuration Options
 
@@ -263,54 +129,22 @@ This saves bandwidth on smaller widgets. You can override this by setting `thumb
 
 | Option | Default | Description |
 |---|---|---|
-| `sizePreset` | `null` | `"small"`, `"medium"`, `"large"`, `"xlarge"`, `"fullscreen"` |
+| `sizePreset` | `null` | `"small"` (300×200), `"medium"` (480×320), `"large"` (800×600), `"xlarge"` (1024×768), `"fullscreen"` (100%) |
 | `width` | `null` | Custom width in pixels (overrides preset) |
 | `height` | `null` | Custom height in pixels (overrides preset) |
 | `maxWidth` | `"100%"` | CSS max-width fallback |
 | `maxHeight` | `"100%"` | CSS max-height fallback |
 
-## MagicMirror² Positions Reference
-
-When choosing `position` in your config, these are the available MagicMirror² regions:
-
-| Position | Description |
-|---|---|
-| `top_bar` | Full-width bar at top |
-| `top_left` | Top-left corner |
-| `top_center` | Top center |
-| `top_right` | Top-right corner |
-| `upper_third` | Upper third of screen |
-| `middle_center` | Center of screen |
-| `lower_third` | Lower third of screen |
-| `bottom_left` | Bottom-left corner |
-| `bottom_center` | Bottom center |
-| `bottom_right` | Bottom-right corner |
-| `bottom_bar` | Full-width bar at bottom |
-| `fullscreen_above` | Fullscreen (above other modules) |
-| `fullscreen_below` | Fullscreen (behind other modules) |
+> **Tip:** When `thumbnailSize` is `"auto"`, the module picks the best Synology thumbnail for your widget size (≤320px → `sm`, 321–800px → `m`, >800px → `xl`). You can mix sizing approaches — e.g., `sizePreset: "medium", width: 600` gives you 600×320.
 
 ## Finding Album & Folder IDs
 
-To find your album or folder IDs, query your Synology API directly:
+Query your Synology API directly (replace `<NAS_IP>` and `<YOUR_SID>`):
 
-**List albums:**
-```
-https://<NAS_IP>:5001/photo/webapi/entry.cgi?api=SYNO.Foto.Browse.Album&version=1&method=list&offset=0&limit=100&_sid=<YOUR_SID>
-```
+- **Albums:** `https://<NAS_IP>:5001/photo/webapi/entry.cgi?api=SYNO.Foto.Browse.Album&version=1&method=list&offset=0&limit=100&_sid=<YOUR_SID>`
+- **Folders:** `https://<NAS_IP>:5001/photo/webapi/entry.cgi?api=SYNO.Foto.Browse.Folder&version=1&method=list_parents&_sid=<YOUR_SID>`
 
-**List folders:**
-```
-https://<NAS_IP>:5001/photo/webapi/entry.cgi?api=SYNO.Foto.Browse.Folder&version=1&method=list_parents&_sid=<YOUR_SID>
-```
-
-## Publishing / Contributing
-
-This module is listed on the [MagicMirror² 3rd Party Modules](https://github.com/MagicMirrorOrg/MagicMirror/wiki/3rd-Party-Modules) wiki.
-
-To install via MMPM:
-```bash
-mmpm install MMM-SynologyPhotos
-```
+## Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request on [GitHub](https://github.com/zarif98/MMM-SynologyPhotos).
 
