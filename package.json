@@ -31,6 +31,6 @@
   "author": "Zarif Rahman",
   "license": "MIT",
   "dependencies": {
-    "node-fetch": "^2.7.0"
+    "node-fetch": "^3.3.2"
   }
 }
