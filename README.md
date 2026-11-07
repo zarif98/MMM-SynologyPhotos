@@ -36,6 +36,10 @@ cd MMM-SynologyPhotos
 npm install
 ```
 
+### Fetch compatibility
+
+The module uses Node.js 16 or later (and must also meet your MagicMirror version’s Node.js requirements). `node-fetch` v3 is an ESM dependency, loaded asynchronously from this CommonJS module. If an older checkout reports `fetch is not a function` or `ERR_REQUIRE_ESM`, update the module, run `npm ci` in its directory, and restart MagicMirror. The v2/v3 distinction refers to **node-fetch**, not Node.js; do not downgrade Node.js.
+
 ## Test Your Connection
 
 Before configuring the module, run the built-in diagnostic tool to verify your NAS is reachable and your credentials work:
@@ -145,6 +149,8 @@ Query your Synology API directly (replace `<NAS_IP>` and `<YOUR_SID>`):
 - **Folders:** `https://<NAS_IP>:5001/photo/webapi/entry.cgi?api=SYNO.Foto.Browse.Folder&version=1&method=list_parents&_sid=<YOUR_SID>`
 
 ## Contributing
+
+Run `npm ci` and `npm test` for the local HTTP regression tests (no NAS or credentials required).
 
 Contributions are welcome! Please open an issue or submit a pull request on [GitHub](https://github.com/zarif98/MMM-SynologyPhotos).
 
