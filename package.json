@@ -6,7 +6,7 @@
   "scripts": {
     "start": "echo 'This is a MagicMirror² module. Install it in ~/MagicMirror/modules/'",
     "lint": "eslint *.js",
-    "test": "echo 'No tests configured yet'"
+    "test": "node tests/fetch.test.js"
   },
   "repository": {
     "type": "git",

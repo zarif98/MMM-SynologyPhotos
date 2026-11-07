@@ -1,5 +1,5 @@
 const NodeHelper = require("node_helper");
-const fetch = require("node-fetch");
+const fetch = require("./fetch");
 const https = require("https");
 const http = require("http");
 const fs = require("fs");
